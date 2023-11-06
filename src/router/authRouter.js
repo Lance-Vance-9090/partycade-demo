@@ -1,8 +1,9 @@
 import { Router } from "express";
-import { signUp } from "../controller/authController.js";
+import { signUp, login } from "../controller/authController.js";
+import { checkAuth } from "../middleware/checkAuth.js";
+import { checkBearer } from "../middleware/checkBearer.js";
 
-// import { AuthMiddleware } from "./Middleware/AuthMiddleware.js";
 export let authRouter = Router();
 
-// POST  Register Diyer
 authRouter.route("/register").post([signUp]);
+authRouter.route("/login").post([login]);
