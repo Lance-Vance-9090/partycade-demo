@@ -31,21 +31,22 @@ export const signUp = async (req, res, next) => {
     const user = await userModel.create({
       name: name,
       email: email,
-      country: country,
+
       password: hashPassword,
       userType: "Registered",
     });
-    const otp = randomInt(100000, 999999);
-    const optKey = await otpModel.create({
+    const otp = randomInt(1000, 9999);
+    console.log(otp);
+    await otpModel.create({
       userId: user._id,
-      optKey: otp,
+      otpKey: otp,
     });
     const emailData = emailForSignUp(otp, "registration");
     if (emailData.error) {
       return next(CustomError.createError(emailData.message, 200));
     }
     if (!user) {
-      return next(CustomError.createError("error registering user", 200));
+      return next(CustomError.createError("error registering user", 400));
     }
   } catch (error) {
     return next(CustomError.createError(error.message, 500));
