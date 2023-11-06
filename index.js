@@ -1,4 +1,3 @@
-import express from "express";
 import ServerConfig from "./src/config/serverConfig.js";
 import { app } from "./app.js";
 const SERVER_PORT = ServerConfig.SERVER_PORT;

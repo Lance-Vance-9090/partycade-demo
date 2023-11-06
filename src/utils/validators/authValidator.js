@@ -16,7 +16,6 @@ export const signUpValidator = joi.object({
         "Password length should be 8 .Must include 1 uppercase 1 lowercase 1 number and 1 special character(@#$%^&+!=?*_-)",
     })
     .required(),
-  country: joi.string().required(),
 });
 
 export const loginValidator = joi.object({
@@ -36,4 +35,9 @@ export const loginValidator = joi.object({
     })
     .required(),
   deviceToken: joi.string().required(),
+});
+
+export const verifyOtpValidator = joi.object({
+  userId: joi.string().required(),
+  otpKey: joi.string().required().length(4),
 });

@@ -1,7 +1,7 @@
 import pkg from "joi";
 const { ValidationError } = pkg;
-import CustomError from "./customError.js";
-import CustomSuccess from "./customSuccess.js";
+import CustomError from "./CustomError.js";
+import CustomSuccess from "./CustomSuccess.js";
 
 export const ResHandler = (err, req, res, next) => {
   let StatusCode = 500;
@@ -9,6 +9,7 @@ export const ResHandler = (err, req, res, next) => {
     message: err.message,
     status: false,
   };
+
   if (err instanceof ValidationError) {
     StatusCode = 400;
     Data = {
