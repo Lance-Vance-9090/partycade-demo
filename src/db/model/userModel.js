@@ -12,8 +12,6 @@ export default model(
       isDeleted: { type: Schema.Types.Boolean, default: false },
       userType: { type: Schema.Types.String, enum: ["Guest", "Registered"] },
       devices: [{ type: Schema.Types.ObjectId, ref: "Device" }],
-
-      //publicId, credId, socialId
     },
     {
       timestamps: true,
