@@ -8,7 +8,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 // Response Handler
-// import { ResHandler } from "./Utils/ResponseHandler/ResHandler.js";
+import { ResHandler } from "./src/utils/Response/resHandler.js";
 import { authRouter } from "./src/router/authRouter.js";
 
 // import {ChatRouter} from "./Router/chatRouter.js";
@@ -50,4 +50,5 @@ app.get("/", (req, res) => {
 
 // Root Routes
 app.use(API_PreFix + Auth_PreFix, authRouter);
+app.use(ResHandler);
 

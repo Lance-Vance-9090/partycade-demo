@@ -1,5 +1,5 @@
 
-export default emailForSignUp = (verificationCode, reason) => {
+export const emailForSignUp = (verificationCode, reason) => {
     return `<h2>Hi there,</h2>
     ${
       reason === "registration"
