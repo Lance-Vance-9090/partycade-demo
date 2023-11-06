@@ -50,19 +50,4 @@ app.get("/", (req, res) => {
 
 // Root Routes
 app.use(API_PreFix + Auth_PreFix, authRouter);
-// app.use(API_PreFix + Preference_PreFix, PreferenceRouter);
-// app.use(API_PreFix + Work_PreFix, WorkRouter);
-// app.use(API_PreFix + Product_PreFix, ProductRouter);
-// app.use(API_PreFix + Diyer_PreFix + Profile_PreFix, DiyerProfileRouter);
-// app.use(API_PreFix + Diyer_PreFix, FollowRouter);
-// app.use(API_PreFix + Diyer_PreFix + Story_PreFix, StoryRouter);
-// app.use(API_PreFix + Diyer_PreFix + Reel_PreFix, ReelRouter);
-// app.use(API_PreFix + Diyer_PreFix + Block_PreFix, BlockRouter);
-// app.use(API_PreFix + Diyer_PreFix + Post_Prefix, PostRouter);
-// app.use(API_PreFix + Diyer_PreFix + Session_Prefix, SessionsRouter);
-// app.use(API_PreFix + Diyer_PreFix + Payment_Prefix, PaymentRouter);
-// app.use(API_PreFix + Admin_Prefix, AdminRouter);
 
-// app.use(API_PreFix + Diyer_PreFix + Chat_Prefix , ChatRouter);
-
-// app.use(ResHandler);
