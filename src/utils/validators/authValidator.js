@@ -41,3 +41,9 @@ export const verifyOtpValidator = joi.object({
   userId: joi.string().required(),
   otpKey: joi.string().required().length(4),
 });
+
+export const socialLoginValidator = joi.object({
+  socialType: joi.string().required().valid("google", "apple"),
+  deviceToken: joi.string().required(),
+  accessToken: joi.string().required(),
+});
