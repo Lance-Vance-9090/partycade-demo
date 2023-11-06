@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import dbConfig from "../config/dbConfig.js";
+import logger from "../../src/logger/logger.js";
 
 let db;
 export const connectDB = () => {
@@ -11,11 +12,10 @@ export const connectDB = () => {
     .then((result) => {
       const mongo = mongoose.connection;
       db = mongo;
-      console.log("MongoDB Connected...");
+      logger.info("MongoDB Connected...");
     })
     .catch((err) => {
-      console.error("MongoDB connection error", err.message);
-      process.exit(1);
+      logger.error("MongoDB connection error", err.message);
     });
 };
 
