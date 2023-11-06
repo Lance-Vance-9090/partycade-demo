@@ -1,6 +1,6 @@
 import express from "express";
 import ServerConfig from "./src/config/serverConfig.js";
-let app = express();
+import { app } from "./app.js";
 const SERVER_PORT = ServerConfig.SERVER_PORT;
 
 // Local
