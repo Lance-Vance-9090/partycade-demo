@@ -18,6 +18,8 @@ export default model(
       },
       devices: [{ type: Schema.Types.ObjectId, ref: "Device" }],
       avatarUrl: { type: Schema.Types.String, default: null },
+      coins: { type: Schema.Types.Number, default: 150 },
+      coinsSpent: { type: Schema.Types.Number, default: 0 },
     },
     {
       timestamps: true,
