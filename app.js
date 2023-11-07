@@ -10,6 +10,7 @@ import { fileURLToPath } from "url";
 // Response Handler
 import { ResHandler } from "./src/utils/Response/resHandler.js";
 import { authRouter } from "./src/router/authRouter.js";
+import { profileRouter } from "./src/router/profileRouter.js";
 
 // import {ChatRouter} from "./Router/chatRouter.js";
 
@@ -20,6 +21,7 @@ export let app = express();
 
 const API_PreFix = "/api/v1";
 const Auth_PreFix = "/auth";
+const Profile_PreFix = "/profile";
 
 app.use("/public/uploads", express.static("./public/uploads"));
 
@@ -50,5 +52,6 @@ app.get("/", (req, res) => {
 
 // Root Routes
 app.use(API_PreFix + Auth_PreFix, authRouter);
+app.use(API_PreFix + Profile_PreFix, profileRouter);
 app.use(ResHandler);
 

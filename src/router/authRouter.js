@@ -15,6 +15,7 @@ import {
 } from "../controller/authController.js";
 import { checkAuth } from "../middleware/checkAuth.js";
 import { checkBearer } from "../middleware/checkBearer.js";
+import { handleMultipartData } from "../utils/multipart.js";
 
 export let authRouter = Router();
 
