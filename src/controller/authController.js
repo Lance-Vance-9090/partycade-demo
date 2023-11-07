@@ -410,3 +410,68 @@ export const resendOtpForgetPassword = async (req, res, next) => {
     return next(CustomError.createError(error.message, 500));
   }
 };
+
+export const socialLogin = async (req, res, next) => {
+  const client = new OAuth2Client(SocialConfig.GOOGLE_CLIENT_ID);
+  try {
+    const { socialType, accessToken, deviceToken } = req.body;
+
+    await socialLoginValidator.validateAsync(req.body);
+
+    let googleOAuth = await client.verifyIdToken({
+      idToken: accessToken,
+      audience: SocialConfig.GOOGLE_CLIENT_ID,
+    });
+
+    googleOAuth = googleOAuth.getPayload();
+
+    let user = await userModel.findOne({
+      email: googleOAuth.email,
+      socialType,
+    });
+
+    if (!user) {
+      user = await userModel.create({
+        name: googleOAuth.name,
+        email: googleOAuth.email,
+        password: "",
+        socialType,
+        isVerified: true,
+        userType: "Registered",
+      });
+
+      const registerDevice = await deviceModel.create({
+        deviceToken,
+        userId: user._id,
+      });
+
+      user = await userModel.updateOne(
+        { _id: user._id },
+        {
+          $push: { devices: registerDevice._id },
+        }
+      );
+      return next(
+        CustomSuccess.createSuccess(user, "User Signed up successfully", 200)
+      );
+    }
+
+    const registerDevice = await deviceModel.create({
+      deviceToken,
+      userId: user._id,
+    });
+
+    user = await userModel.updateOne(
+      { _id: user._id },
+      {
+        $push: { devices: registerDevice._id },
+      }
+    );
+
+    return next(
+      CustomSuccess.createSuccess(user, "User logged in successfully", 200)
+    );
+  } catch (error) {
+    return next(CustomError.createError(error.message, 500));
+  }
+};
