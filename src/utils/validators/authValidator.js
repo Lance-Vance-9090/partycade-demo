@@ -72,3 +72,8 @@ export const resetPasswordValidator = joi.object({
     })
     .required(),
 });
+export const socialLoginValidator = joi.object({
+  socialType: joi.string().required().valid("google", "apple"),
+  deviceToken: joi.string().required(),
+  accessToken: joi.string().required(),
+});

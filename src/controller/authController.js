@@ -9,13 +9,16 @@ import {
   verifyOtpValidator,
   changePasswordValidator,
   resetPasswordValidator,
+  socialLoginValidator,
 } from "../utils/validators/authValidator.js";
 import { hash, compare } from "bcrypt";
 import { randomInt } from "crypto";
 import ServerConfig from "../config/serverConfig.js";
+import SocialConfig from "../config/socialConfig.js";
 import { generateToken } from "../utils/generateToken.js";
 import { emailForSignUp } from "../utils/emailTemplate.js";
 import { sendEmail } from "../utils/sendEmail.js";
+import { OAuth2Client } from "google-auth-library/build/src/index.js";
 
 export const signUp = async (req, res, next) => {
   try {

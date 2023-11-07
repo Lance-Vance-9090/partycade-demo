@@ -11,6 +11,11 @@ export default model(
       isVerified: { type: Schema.Types.Boolean, default: false },
       isDeleted: { type: Schema.Types.Boolean, default: false },
       userType: { type: Schema.Types.String, enum: ["Guest", "Registered"] },
+      socialType: {
+        type: Schema.Types.String,
+        enum: ["google", "apple", ""],
+        default: "",
+      },
       devices: [{ type: Schema.Types.ObjectId, ref: "Device" }],
     },
     {

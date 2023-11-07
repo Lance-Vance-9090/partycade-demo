@@ -9,6 +9,7 @@ import {
   verifyOtpForgetPassword,
   resetPassword,
   resendOtpForgetPassword
+  socialLogin,
 } from "../controller/authController.js";
 import { checkAuth } from "../middleware/checkAuth.js";
 import { checkBearer } from "../middleware/checkBearer.js";
@@ -27,5 +28,4 @@ authRouter
   
 authRouter.route("/reset-password").post([checkAuth, resetPassword]);
 authRouter.route("/resend-otp-forget-password").post([checkBearer, resendOtpForgetPassword]);
-
-
+authRouter.route("/social-login").post([socialLogin]);
