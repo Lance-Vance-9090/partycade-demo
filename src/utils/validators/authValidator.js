@@ -77,3 +77,7 @@ export const socialLoginValidator = joi.object({
   deviceToken: joi.string().required(),
   accessToken: joi.string().required(),
 });
+
+export const guestLoginValidator = joi.object({
+  deviceToken: joi.string().required(),
+});

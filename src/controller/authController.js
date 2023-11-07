@@ -10,6 +10,7 @@ import {
   changePasswordValidator,
   resetPasswordValidator,
   socialLoginValidator,
+  guestLoginValidator,
 } from "../utils/validators/authValidator.js";
 import { hash, compare } from "bcrypt";
 import { randomInt } from "crypto";
@@ -19,6 +20,8 @@ import { generateToken } from "../utils/generateToken.js";
 import { emailForSignUp } from "../utils/emailTemplate.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { OAuth2Client } from "google-auth-library/build/src/index.js";
+import { uuid } from "uuidv4";
+import jwt from "jsonwebtoken";
 
 export const signUp = async (req, res, next) => {
   try {
@@ -471,6 +474,82 @@ export const socialLogin = async (req, res, next) => {
     return next(
       CustomSuccess.createSuccess(user, "User logged in successfully", 200)
     );
+  } catch (error) {
+    return next(CustomError.createError(error.message, 500));
+  }
+};
+
+export const loginAsGuest = async (req, res, next) => {
+  try {
+    const { deviceToken } = req.body;
+
+    await guestLoginValidator.validateAsync(req.body);
+
+    const guestId = uuid();
+
+    let guestUser = await new userModel({
+      name: "GUEST-" + guestId,
+      email: guestId + "@guest.com",
+      password: null,
+      country: null,
+      isVerified: true,
+      userType: "Guest",
+    }).save();
+
+    const registerDevice = await new deviceModel({
+      deviceToken,
+      userId: guestUser._id,
+    }).save();
+
+    guestUser = await userModel
+      .findByIdAndUpdate(
+        guestUser._id,
+        {
+          $push: { devices: registerDevice._id },
+        },
+        { new: true }
+      )
+      .select("name isVerified");
+
+    const token = generateToken({
+      id: guestUser._id,
+      email: guestUser.email,
+    });
+
+    return next(
+      CustomSuccess.createSuccess(
+        { user: guestUser, token: token },
+        "Guest user logged in successfully",
+        200
+      )
+    );
+  } catch (error) {
+    return next(CustomError.createError(error.message, 500));
+  }
+};
+
+export const verifyToken = async (req, res, next) => {
+  try {
+    const tokenHeader = req.headers["authorization"];
+
+    if (!tokenHeader) {
+      return next(CustomError.createError("Token header not found", 401));
+    }
+
+    const token = tokenHeader.split(" ")[1];
+
+    jwt.verify(token, ServerConfig.JWT_SECRET, async (err, decoded) => {
+      if (err) {
+        return next(CustomError.createError("Invalid token", 401));
+      }
+      const user = await userModel
+        .findById(decoded.id)
+        .select("-password -devices -createdAt -updatedAt -__v");
+
+      return next(
+        CustomSuccess.createSuccess(user, "Token verified successfully", 200)
+      );
+    });
   } catch (error) {
     return next(CustomError.createError(error.message, 500));
   }
