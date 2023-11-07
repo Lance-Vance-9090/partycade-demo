@@ -17,6 +17,7 @@ export default model(
         default: "",
       },
       devices: [{ type: Schema.Types.ObjectId, ref: "Device" }],
+      avatarUrl: { type: Schema.Types.String, default: null },
     },
     {
       timestamps: true,

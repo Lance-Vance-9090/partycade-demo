@@ -260,7 +260,7 @@ export const changePassword = async (req, res, next) => {
     if (!user) {
       return next(CustomError.createError("User Does not exist", 404));
     }
-    const matchedpassword = await bcrypt.compare(oldPassword, user.password);
+    const matchedpassword = await compare(oldPassword, user.password);
     if (!matchedpassword) {
       return next(CustomError.createError("Old Password does not match", 400));
     }
@@ -475,3 +475,5 @@ export const socialLogin = async (req, res, next) => {
     return next(CustomError.createError(error.message, 500));
   }
 };
+
+
