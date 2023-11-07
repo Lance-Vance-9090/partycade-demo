@@ -7,25 +7,58 @@ import {
   signUpValidator,
   loginValidator,
   verifyOtpValidator,
+  changePasswordValidator,
+  resetPasswordValidator,
 } from "../utils/validators/authValidator.js";
 import { hash, compare } from "bcrypt";
 import { randomInt } from "crypto";
 import ServerConfig from "../config/serverConfig.js";
 import { generateToken } from "../utils/generateToken.js";
 import { emailForSignUp } from "../utils/emailTemplate.js";
+import { sendEmail } from "../utils/sendEmail.js";
 
 export const signUp = async (req, res, next) => {
   try {
     const { error } = signUpValidator.validate(req.body);
     if (error) {
       error.details.map((err) => {
-        return next(CustomError.createError(err.message, 200));
+        return next(CustomError.createError(err.message, 400));
       });
     }
     const { name, email, password } = req.body;
+    const otp = randomInt(1000, 9999);
+    const emailData = emailForSignUp(otp, "registration");
     const userExist = await userModel.findOne({
       email: email,
     });
+    if (userExist && userExist.isVerified == false) {
+      await otpModel.findOneAndUpdate(
+        {
+          userId: userExist._id,
+          isUsed: false,
+          reason: "registration",
+        },
+        {
+          otpKey: otp,
+          expiry: new Date(Date.now() + 10 * 60 * 1000),
+        }
+      );
+      const verificationEmail = await sendEmail(
+        email,
+        "Verify your email address",
+        emailData
+      );
+      if (verificationEmail) {
+        return next(
+          CustomSuccess.createSuccess(
+            userExist,
+            "User Registered successfully",
+            200
+          )
+        );
+      }
+      return next(CustomError.createError("Otp not sent", 400));
+    }
     if (userExist) {
       return next(CustomError.createError("user already exist", 200));
     }
@@ -33,23 +66,32 @@ export const signUp = async (req, res, next) => {
     const user = await userModel.create({
       name: name,
       email: email,
-
       password: hashPassword,
       userType: "Registered",
     });
-    const otp = randomInt(1000, 9999);
-    console.log(otp);
+
     await otpModel.create({
       userId: user._id,
       otpKey: otp,
+      reason: "registration",
     });
-    const emailData = emailForSignUp(otp, "registration");
     if (emailData.error) {
       return next(CustomError.createError(emailData.message, 200));
     }
     if (!user) {
       return next(CustomError.createError("error registering user", 400));
     }
+    const verificationEmail = await sendEmail(
+      email,
+      "Verify your email address",
+      emailData
+    );
+    if (verificationEmail) {
+      return next(
+        CustomSuccess.createSuccess(user, "User Registered successfully", 200)
+      );
+    }
+    return next(CustomError.createError("Otp not sent", 400));
   } catch (error) {
     return next(CustomError.createError(error.message, 500));
   }
@@ -129,7 +171,7 @@ export const verifyOtp = async (req, res, next) => {
     }
 
     const otp = await otpModel
-      .findOne({ userId })
+      .findOne({ userId, reason: "registration" })
       .select("otpKey expiry isUsed");
 
     if (otpKey !== otp.otpKey.toString()) {
@@ -167,6 +209,201 @@ export const verifyOtp = async (req, res, next) => {
     );
   } catch (error) {
     console.log(error);
+    return next(CustomError.createError(error.message, 500));
+  }
+};
+
+export const resendOtp = async (req, res, next) => {
+  try {
+    const { userId } = req.query;
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return next(CustomError.createError("user not found", 404));
+    }
+    const newOtp = randomInt(1000, 9999);
+    await otpModel.findOneAndUpdate(
+      {
+        userId: userId,
+        isUsed: false,
+        reason: "registration",
+      },
+      {
+        otpKey: newOtp,
+        expiry: new Date(Date.now() + 10 * 60 * 1000),
+      }
+    );
+    const emailData = emailForSignUp(newOtp, "registration");
+    const verificationEmail = await sendEmail(
+      user.email,
+      "Resend OTP for email verification",
+      emailData
+    );
+    if (verificationEmail) {
+      return next(
+        CustomSuccess.createSuccess(user, "Otp Sent Successfully", 200)
+      );
+    }
+    return next(CustomError.createError("Otp not sent", 400));
+  } catch (error) {
+    return next(CustomError.createError(error.message, 500));
+  }
+};
+
+export const changePassword = async (req, res, next) => {
+  try {
+    await changePasswordValidator.validateAsync(req.body);
+    const { oldPassword, newPassword } = req.body;
+    const user = await userModel.findById(req.userId);
+    if (!user) {
+      return next(CustomError.createError("User Does not exist", 404));
+    }
+    const matchedpassword = await bcrypt.compare(oldPassword, user.password);
+    if (!matchedpassword) {
+      return next(CustomError.createError("Old Password does not match", 400));
+    }
+    const password = await hash(newPassword, ServerConfig.SALT);
+    await userModel.findByIdAndUpdate(req.userId, {
+      password: password,
+    });
+    return next(
+      CustomSuccess.createSuccess(user, "Password Changed Successfully", 200)
+    );
+  } catch (error) {
+    return next(CustomError.createError(error.message, 500));
+  }
+};
+
+export const forgetPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const user = await userModel.findOne({ email: email });
+    if (!user) {
+      return next(CustomError.createError("User Does not exist", 404));
+    }
+    const otp = randomInt(1000, 9999);
+    await otpModel.create({
+      userId: user._id,
+      otpKey: otp,
+      reason: "forget-password",
+    });
+    const emailData = emailForSignUp(otp, "forget-password");
+    const verificationEmail = await sendEmail(
+      email,
+      "Verify your email address",
+      emailData
+    );
+    if (verificationEmail) {
+      return next(
+        CustomSuccess.createSuccess(user, "Otp Sent Successfully", 200)
+      );
+    }
+    return next(CustomError.createError("Otp not sent", 400));
+  } catch (error) {
+    return next(CustomError.createError(error.message, 500));
+  }
+};
+
+export const verifyOtpForgetPassword = async (req, res, next) => {
+  try {
+    const { otpKey, userId } = req.body;
+    const otp = await otpModel.findOne({
+      userId: userId,
+      reason: "forget-password",
+    });
+    const user = await userModel.findById(userId).select("email");
+    if (!otp) {
+      return next(CustomError.createError("Otp not found", 404));
+    }
+    if (otpKey !== otp.otpKey.toString()) {
+      return next(CustomError.createError("Wrong OTP Entered", 400));
+    }
+    if (otp.isUsed) {
+      return next(CustomError.createError("OTP already used", 400));
+    }
+
+    await otpModel.findByIdAndUpdate(otp._id, {
+      isUsed: true,
+    });
+    const token = generateToken({
+      id: userId,
+      email: user.email,
+    });
+
+    return next(
+      CustomSuccess.createSuccess(
+        { token: token },
+        "Otp verified Successfully",
+        200
+      )
+    );
+  } catch (error) {
+    return next(CustomError.createError(error.message, 500));
+  }
+};
+
+export const resetPassword = async (req, res, next) => {
+  try {
+    await resetPasswordValidator.validateAsync(req.body);
+    const userId = req.userId;
+    const { password } = req.body;
+    const checkOtp = await otpModel.findOne({
+      userId: userId,
+      reason: "forget-password",
+    });
+    if (!checkOtp) {
+      return next(CustomError.createError("otp not found", 404));
+    }
+    if (checkOtp.isUsed == false) {
+      return next(CustomError.createError("otp not verified", 404));
+    }
+    const newPassword = await hash(password, ServerConfig.SALT);
+    const user = await userModel.findByIdAndUpdate(userId, {
+      password: newPassword,
+    });
+
+    return next(
+      CustomSuccess.createSuccess(user, "Password reset Successfully", 200)
+    );
+  } catch (error) {
+    return next(CustomError.createError(error.message, 500));
+  }
+};
+
+export const resendOtpForgetPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const user = await userModel.findOne({ email: email });
+    if (!user) {
+      return next(CustomError.createError("user does not exist", 404));
+    }
+    const otp = await otpModel.findOne({
+      userId: user._id,
+      reason: "forget-password",
+    });
+    if (!otp) {
+      return next(CustomError.createError("Otp not found", 404));
+    }
+    if (otp.isUsed) {
+      return next(CustomError.createError("otp is already used", 404));
+    }
+    const newOtp = randomInt(1000, 9999);
+    const emailData = emailForSignUp(newOtp, "forget-password");
+    const verificationEmail = await sendEmail(
+      email,
+      "Verify your email address",
+      emailData
+    );
+
+    if (verificationEmail) {
+      await otpModel.findByIdAndUpdate(otp._id, {
+        otpKey: newOtp,
+        expiry: new Date(Date.now() + 10 * 60 * 1000),
+      });
+      return next(
+        CustomSuccess.createSuccess(user, "Otp Sent Successfully", 200)
+      );
+    }
+  } catch (error) {
     return next(CustomError.createError(error.message, 500));
   }
 };
