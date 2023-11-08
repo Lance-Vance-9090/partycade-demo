@@ -5,7 +5,7 @@ export default model(
   new Schema(
     {
       eventId: { type: Schema.Types.ObjectId, ref: "Event", required: true },
-      //templateId: { type: Schema.Types.ObjectId },
+      templateId: [{ type: Schema.Types.ObjectId, ref: "gameTemplate" }],
       name: { type: Schema.Types.String },
       howToPlay: { type: Schema.Types.String },
       time: { type: Schema.Types.Number, default: 20 }, //in minutes
@@ -17,16 +17,11 @@ export default model(
       participantsCount: { type: Schema.Types.Number, default: 0 },
       questionId: [{ type: Schema.Types.ObjectId, ref: "Question" }],
       totalQuestions: { type: Schema.Types.Number },
-      gameType: {
-        type: Schema.Types.String,
-        enum: [
-          "MultipleChoice",
-          "TrueFalse",
-          "FillIntheBlank",
-          "PointBased",
-          "Matching",
-        ],
+      gameTemplate: {
+        type: Schema.Types.ObjectId,
+        ref: "gameTemplate",
       },
+
       winner: { type: Schema.Types.ObjectId, ref: "User" },
       //   scoreBoard: { type: Schema.Types.ObjectId, ref: "GameScoreBoard" },
     },
